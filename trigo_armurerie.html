@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trigonométrie — BMA Armurerie</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #1a1814;
+    --surface:  #221f1b;
+    --card:     #2b2720;
+    --border:   #3d3730;
+    --accent:   #c8a96e;
+    --accent2:  #8c6d3f;
+    --text:     #e8e0d0;
+    --muted:    #857d70;
+    --correct:  #5a8a5a;
+    --wrong:    #8a4a4a;
+    --tag-bg:   #3a3020;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* Texture grain */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+  }
+
+  header {
+    position: relative;
+    border-bottom: 1px solid var(--border);
+    padding: 2.5rem 3rem 2rem;
+    display: flex;
+    align-items: flex-end;
+    gap: 2rem;
+    background: linear-gradient(180deg, #0f0d0b 0%, transparent 100%);
+  }
+
+  .header-cross {
+    font-size: 3.5rem;
+    line-height: 1;
+    color: var(--accent);
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: -2px;
+  }
+
+  .header-text h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    letter-spacing: 3px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .header-text p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 0.4rem;
+  }
+
+  .header-badge {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    border: 1px solid var(--accent2);
+    padding: 0.3rem 0.8rem;
+    text-transform: uppercase;
+  }
+
+  /* Score bar */
+  .score-bar {
+    position: relative;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0.9rem 3rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .score-bar span { color: var(--accent); font-weight: 600; }
+
+  .progress-track {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    width: 0%;
+    transition: width 0.6s ease;
+  }
+
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 3rem 2rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  /* Chapter dividers */
+  .chapter {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: -1rem;
+  }
+  .chapter-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .chapter-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Exercise card */
+  .ex-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    padding: 1.8rem 2rem;
+    position: relative;
+    transition: border-color 0.3s;
+  }
+
+  .ex-card.answered { border-left-color: var(--correct); }
+  .ex-card.answered.wrong { border-left-color: var(--wrong); }
+
+  .ex-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .ex-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--accent2);
+    min-width: 2.5rem;
+  }
+
+  .ex-meta {
+    flex: 1;
+  }
+
+  .ex-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 0.15rem 0.55rem;
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .tag.theo { border-color: var(--accent2); color: var(--accent); }
+
+  .difficulty {
+    display: flex;
+    gap: 3px;
+    margin-top: 0.3rem;
+  }
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  .dot.on { background: var(--accent); }
+
+  /* Figure description */
+  .figure-desc {
+    background: #1f1c18;
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.2rem;
+    font-style: italic;
+    color: #c8bfad;
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  .figure-desc::before {
+    content: '📐 ';
+    font-style: normal;
+  }
+
+  /* Sub-questions */
+  .questions-block {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .question-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .question-label {
+    font-size: 0.92rem;
+    color: var(--text);
+    padding-left: 0.2rem;
+  }
+
+  .question-label em {
+    font-style: normal;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+  }
+
+  .step-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    padding-left: 0.2rem;
+  }
+
+  .answer-input {
+    width: 100%;
+    background: #181510;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    padding: 0.6rem 0.9rem;
+    outline: none;
+    height: 40px;
+    transition: border-color 0.2s;
+  }
+
+  .answer-input:focus {
+    border-color: var(--accent2);
+  }
+
+  .answer-input.correct-input { border-color: var(--correct); background: #1a2a1a; }
+  .answer-input.wrong-input   { border-color: var(--wrong);   background: #2a1a1a; }
+
+  /* Verify button row */
+  .btn-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.2rem;
+  }
+
+  .btn-verify {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.95rem;
+    letter-spacing: 2px;
+    padding: 0.5rem 1.4rem;
+    background: transparent;
+    border: 1px solid var(--accent2);
+    color: var(--accent);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .btn-verify:hover { background: var(--accent2); color: var(--bg); }
+
+  .feedback {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .feedback.show { opacity: 1; }
+  .feedback.ok  { color: #7aba7a; }
+  .feedback.ko  { color: #ba7a7a; }
+
+  /* Correction zone */
+  .correction {
+    display: none;
+    background: #161412;
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent2);
+    padding: 1rem 1.2rem;
+    margin-top: 1rem;
+    font-size: 0.88rem;
+    color: #b0a890;
+  }
+  .correction.show { display: block; }
+  .correction strong { color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+
+  /* Formula helper */
+  .formula-strip {
+    background: #181510;
+    border: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+  .formula-strip .f-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .formula-strip .f-item span { color: var(--accent); }
+  .formula-strip-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    color: var(--muted);
+    width: 100%;
+    margin-bottom: 0.3rem;
+  }
+
+  /* Final score */
+  #final-score {
+    display: none;
+    text-align: center;
+    padding: 3rem 2rem;
+    border: 1px solid var(--border);
+    background: var(--card);
+  }
+  #final-score h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    letter-spacing: 4px;
+    color: var(--accent);
+  }
+  #final-score p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 1.5rem 1.2rem 1rem; }
+    main { padding: 2rem 1rem 4rem; }
+    .score-bar { padding: 0.8rem 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-cross">✛</div>
+  <div class="header-text">
+    <h1>Trigonométrie</h1>
+    <p>BMA Armurerie · Mathématiques · Fiche exercices</p>
+  </div>
+  <div class="header-badge">Niveau progressif</div>
+</header>
+
+<div class="score-bar">
+  <span>PROGRESSION</span>
+  <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  <span id="score-display">0 / 10</span>
+</div>
+
+<main>
+
+  <!-- Rappel formules -->
+  <div class="formula-strip">
+    <div class="formula-strip-title">Rappel des formules</div>
+    <div class="f-item">Pythagore : <span>a² + b² = c²</span></div>
+    <div class="f-item">sin(α) = <span>opp / hyp</span></div>
+    <div class="f-item">cos(α) = <span>adj / hyp</span></div>
+    <div class="f-item">tan(α) = <span>opp / adj</span></div>
+    <div class="f-item">Thalès : <span>AB/AD = AC/AE = BC/DE</span></div>
+  </div>
+
+  <!-- ───── CHAPITRE 1 ───── -->
+  <div class="chapter"><span class="chapter-label">Pythagore — Niveau 1</span><div class="chapter-line"></div></div>
+
+  <!-- Ex 1 -->
+  <div class="ex-card" id="card-1">
+    <div class="ex-header">
+      <div class="ex-num">01</div>
+      <div class="ex-meta">
+        <div class="ex-tags">
+          <span class="tag theo">Pythagore</span>
+          <span class="tag">Calcul direct</span>
+        </div>
+        <div class="difficulty">
+          <div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-desc">
+      Un canon de fusil est modélisé par un triangle rectangle ABC, avec l'angle droit en B.
+      Le côté AB (longueur du canon) mesure <strong>48 cm</strong>, et le côté BC (hauteur de la hausse) mesure <strong>14 cm</strong>.
+    </div>
+    <div class="questions-block">
+      <div class="question-row">
+        <div class="question-label">Calculer la longueur AC (la diagonale vue de profil, qui correspond à l'hypoténuse). Donner le résultat arrondi au dixième.</div>
+        <input type="text" class="answer-input" id="q1-1" placeholder="Votre réponse…">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-verify" onclick="verify(1)">Vérifier</button>
+      <span class="feedback" id="fb-1"></span>
+    </div>
+    <div class="correction" id="corr-1">
+      <strong>Correction :</strong> AC² = AB² + BC² = 48² + 14² = 2304 + 196 = 2500 → AC = <strong>50 cm</strong>
+    </div>
+  </div>
+
+  <!-- Ex 2 -->
+  <div class="ex-card" id="card-2">
+    <div class="ex-header">
+      <div class="ex-num">02</div>
+      <div class="ex-meta">
+        <div class="ex-tags">
+          <span class="tag theo">Pythagore</span>
+          <span class="tag">Côté manquant</span>
+        </div>
+        <div class="difficulty">
+          <div class="dot on"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-desc">
+      La lame d'un couteau de chasse est schématisée par un triangle rectangle DEF, angle droit en E.
+      L'hypoténuse DF mesure <strong>22 cm</strong>. Le côté DE (la hauteur du dos de lame) mesure <strong>6 cm</strong>.
+    </div>
+    <div class="questions-block">
+      <div class="question-row">
+        <div class="question-label">Calculer la longueur EF (la tranche de lame). Arrondir au centième.</div>
+        <input type="text" class="answer-input" id="q2-1" placeholder="Votre réponse…">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-verify" onclick="verify(2)">Vérifier</button>
+      <span class="feedback" id="fb-2"></span>
+    </div>
+    <div class="correction" id="corr-2">
+      <strong>Correction :</strong> EF² = DF² − DE² = 22² − 6² = 484 − 36 = 448 → EF = √448 ≈ <strong>21,17 cm</strong>
+    </div>
+  </div>
+
+  <!-- ───── CHAPITRE 2 ───── -->
+  <div class="chapter"><span class="chapter-label">Sin / Cos / Tan — Niveau 2</span><div class="chapter-line"></div></div>
+
+  <!-- Ex 3 -->
+  <div class="ex-card" id="card-3">
+    <div class="ex-header">
+      <div class="ex-num">03</div>
+      <div class="ex-meta">
+        <div class="ex-tags">
+          <span class="tag theo">Cosinus</span>
+          <span class="tag">Trouver un côté</span>
+        </div>
+        <div class="difficulty">
+          <div class="dot on"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-desc">
+      Le schéma d'une crosse de pistolet est modélisé par un triangle rectangle GHI, angle droit en H.
+      L'angle en G vaut <strong>35°</strong>. L'hypoténuse GI mesure <strong>18 cm</strong>.
+    </div>
+    <div class="questions-block">
+      <div class="question-row">
+        <div class="question-label">En utilisant le cosinus, calculer la longueur GH (le côté adjacent à l'angle G). Arrondir au centième.</div>
+        <input type="text" class="answer-input" id="q3-1" placeholder="Votre réponse…">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-verify" onclick="verify(3)">Vérifier</button>
+      <span class="feedback" id="fb-3"></span>
+    </div>
+    <div class="correction" id="corr-3">
+      <strong>Correction :</strong> cos(35°) = GH / GI → GH = GI × cos(35°) = 18 × 0,8192 ≈ <strong>14,75 cm</strong>
+    </div>
+  </div>
+
+  <!-- Ex 4 -->
+  <div class="ex-card" id="card-4">
+    <div class="ex-header">
+      <div class="ex-num">04</div>
+      <div class="ex-meta">
+        <div class="ex-tags">
+          <span class="tag theo">Sinus</span>
+          <span class="tag">Trouver un côté</span>
+        </div>
+        <div class="difficulty">
+          <div class="dot on"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-desc">
+      Le profil d'une détente de carabine est schématisé par un triangle rectangle JKL, angle droit en K.
+      L'angle en J vaut <strong>52°</strong>. L'hypoténuse JL mesure <strong>9 cm</strong>.
+    </div>
+    <div class="questions-block">
+      <div class="question-row">
+        <div class="question-label">En utilisant le sinus, calculer la longueur KL (le côté opposé à l'angle J). Arrondir au centième.</div>
+        <input type="text" class="answer-input" id="q4-1" placeholder="Votre réponse…">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-verify" onclick="verify(4)">Vérifier</button>
+      <span class="feedback" id="fb-4"></span>
+    </div>
+    <div class="correction" id="corr-4">
+      <strong>Correction :</strong> sin(52°) = KL / JL → KL = JL × sin(52°) = 9 × 0,7880 ≈ <strong>7,09 cm</strong>
+    </div>
+  </div>
+
+  <!-- Ex 5 -->
+  <div class="ex-card" id="card-5">
+    <div class="ex-header">
+      <div class="ex-num">05</div>
+      <div class="ex-meta">
+        <div class="ex-tags">
+          <span class="tag theo">Tangente</span>
+          <span class="tag">Trouver un angle</span>
+        </div>
+        <div class="difficulty">
+          <div class="dot on"></div><div class="dot on"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-desc">
+      La coupe transversale d'une poignée de pistolet est modélisée par un triangle rectangle MNP, angle droit en N.
+      Le côté MN (côté adjacent) mesure <strong>8 cm</strong>, le côté NP (côté opposé) mesure <strong>5,5 cm</strong>.
+    </div>
+    <div class="questions-block">
+      <div class="question-row">
+        <div class="question-label">Calculer la mesure de l'angle en M (en utilisant la tangente). Arrondir au degré.</div>
+        <input type="text" class="answer-input" id="q5-1" placeholder="Votre réponse…">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-verify" onclick="verify(5)">Vérifier</button>
+      <span class="feedback" id="fb-5"></span>
+    </div>
+    <div class="correction" id="corr-5">
+      <strong>Correction :</strong> tan(M) = NP / MN = 5,5 / 8 = 0,6875 → M = arctan(0,6875) ≈ <strong>34°</strong>
+    </div>
+  </div>
+
+  <!-- ───── CHAPITRE 3 ───── -->
+  <div class="chapter"><span class="chapter-label">Thalès — Niveau 3</span><div class="chapter-line"></div></div>
+
+  <!-- Ex 6 -->
+  <div class="ex-card" id="card-6">
+    <div class="ex-header">
+      <div class="ex-num">06</div>
+      <div class="ex-meta">
+        <div class="ex-tags">
+          <span class="tag theo">Thalès</span>
+          <span class="tag">Côté manquant</span>
+        </div>
+        <div class="difficulty">
+          <div class="dot on"></div><div class="dot on"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-desc">
+      Un technicien en armurerie utilise un pantographe pour reproduire une pièce à l'échelle.
+      On a deux triangles semblables : le grand triangle QRS et le petit QTU, T sur QR et U sur QS.
+      QR = <strong>30 cm</strong>, QT = <strong>18 cm</strong>, RS = <strong>25 cm</strong>.
+      Les droites TU et RS sont parallèles.
+    </div>
+    <div class="questions-block">
+      <div class="question-row">
+        <div class="question-label">En appliquant le théorème de Thalès, calculer la longueur TU (la pièce reproduite). Arrondir au centième.</div>
+        <input type="text" class="answer-input" id="q6-1" placeholder="Votre réponse…">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-verify" onclick="verify(6)">Vérifier</button>
+      <span class="feedback" id="fb-6"></span>
+    </div>
+    <div class="correction" id="corr-6">
+      <strong>Correction :</strong> QT/QR = TU/RS → 18/30 = TU/25 → TU = 25 × 18/30 = 25 × 0,6 = <strong>15 cm</strong>
+    </div>
+  </div>
+
+  <!-- ───── CHAPITRE 4 ───── -->
+  <div class="chapter"><span class="chapter-label">Exercices à étapes — Niveau 4</span><div class="chapter-line"></div></div>
+
+  <!-- Ex 7 : Pythagore + Trig -->
+  <div class="ex-card" id="card-7">
+    <div class="ex-header">
+      <div class="ex-num">07</div>
+      <div class="ex-meta">
+        <div class="ex-tags">
+          <span class="tag theo">Pythagore</span>
+          <span class="tag theo">Cosinus</span>
+          <span class="tag">2 étapes</span>
+        </div>
+        <div class="difficulty">
+          <div class="dot on"></div><div class="dot on"></div><div class="dot on"></div><div class="dot on"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-desc">
+      La monture d'une lunette de visée est schématisée par un triangle rectangle ABC, angle droit en B.
+      AB = <strong>12 cm</strong>, BC = <strong>9 cm</strong>.
+      On souhaite calculer l'angle en A (angle d'inclinaison de la lunette).
+    </div>
+    <div class="questions-block">
+      <div class="question-row">
+        <div class="question-label"><em>Étape 1.</em> Calculer l'hypoténuse AC à l'aide du théorème de Pythagore. Arrondir au centième.</div>
+        <input type="text" class="answer-input" id="q7-1" placeholder="Votre réponse…">
+      </div>
+      <div class="question-row">
+        <div class="question-label"><em>Étape 2.</em> En utilisant le cosinus, calculer l'angle en A. Arrondir au degré.</div>
+        <input type="text" class="answer-input" id="q7-2" placeholder="Votre réponse…">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-verify" onclick="verify(7)">Vérifier</button>
+      <span class="feedback" id="fb-7"></span>
+    </div>
+    <div class="correction" id="corr-7">
+      <strong>Étape 1 :</strong> AC² = 12² + 9² = 144 + 81 = 225 → AC = <strong>15 cm</strong><br><br>
+      <strong>Étape 2 :</strong> cos(A) = AB / AC = 12 / 15 = 0,8 → A = arccos(0,8) ≈ <strong>37°</strong>
+    </div>
+  </div>
+
+  <!-- Ex 8 : Thalès + Pythagore -->
+  <div class="ex-card" id="card-8">
+    <div class="ex-header">
+      <div class="ex-num">08</div>
+      <div class="ex-meta">
+        <div class="ex-tags">
+          <span class="tag theo">Thalès</span>
+          <span class="tag theo">Pythagore</span>
+          <span class="tag">2 étapes</span>
+        </div>
+        <div class="difficulty">
+          <div class="dot on"></div><div class="dot on"></div><div class="dot on"></div><div class="dot on"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-desc">
+      Dans un atelier, un gabarit de découpe est représenté par deux triangles semblables.
+      Le grand triangle a pour côtés : base = <strong>40 cm</strong>, hauteur = <strong>30 cm</strong>.
+      Le petit triangle (semblable) a une base = <strong>16 cm</strong> (côtés homologues parallèles).
+      On veut calculer la longueur de l'hypoténuse du petit triangle.
+    </div>
+    <div class="questions-block">
+      <div class="question-row">
+        <div class="question-label"><em>Étape 1.</em> À l'aide de Thalès, calculer la hauteur du petit triangle.</div>
+        <input type="text" class="answer-input" id="q8-1" placeholder="Votre réponse…">
+      </div>
+      <div class="question-row">
+        <div class="question-label"><em>Étape 2.</em> Calculer l'hypoténuse du petit triangle à l'aide de Pythagore. Arrondir au centième.</div>
+        <input type="text" class="answer-input" id="q8-2" placeholder="Votre réponse…">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-verify" onclick="verify(8)">Vérifier</button>
+      <span class="feedback" id="fb-8"></span>
+    </div>
+    <div class="correction" id="corr-8">
+      <strong>Étape 1 :</strong> rapport = 16/40 = 0,4 → hauteur = 30 × 0,4 = <strong>12 cm</strong><br><br>
+      <strong>Étape 2 :</strong> hyp² = 16² + 12² = 256 + 144 = 400 → hyp = <strong>20 cm</strong>
+    </div>
+  </div>
+
+  <!-- ───── CHAPITRE 5 ───── -->
+  <div class="chapter"><span class="chapter-label">Problèmes complexes — Niveau 5</span><div class="chapter-line"></div></div>
+
+  <!-- Ex 9 : Angle + côté inconnu -->
+  <div class="ex-card" id="card-9">
+    <div class="ex-header">
+      <div class="ex-num">09</div>
+      <div class="ex-meta">
+        <div class="ex-tags">
+          <span class="tag theo">Sinus</span>
+          <span class="tag theo">Pythagore</span>
+          <span class="tag">3 étapes</span>
+        </div>
+        <div class="difficulty">
+          <div class="dot on"></div><div class="dot on"></div><div class="dot on"></div><div class="dot on"></div><div class="dot on"></div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-desc">
+      L'axe d'une carabine de tir sportif est représenté par un triangle rectangle PQR, angle droit en Q.
+      L'angle en P vaut <strong>28°</strong>, et le côté PQ (côté adjacent) mesure <strong>55 cm</strong>.
+      On veut calculer la hauteur QR (côté opposé), puis vérifier l'hypoténuse PR, puis calculer l'angle en R.
+    </div>
+    <div class="questions-block">
+      <div class="question-row">
+        <div class="question-label"><em>Étape 1.</em> Calculer QR à l'aide de la tangente. Arrondir au centième.</div>
+        <input type="text" class="answer-input" id="q9-1" placeholder="Votre réponse…">
+      </div>
+      <div class="question-row">
+        <div class="question-label"><em>Étape 2.</em> Calculer PR (hypoténuse) avec Pythagore. Arrondir au centième.</div>
+        <input type="text" class="answer-input" id="q9-2" placeholder="Votre réponse…">
+      </div>
+      <div class="question-row">
+        <div class="question-label"><em>Étape 3.</em> Calculer l'angle en R à l'aide du cosinus. Arrondir au degré. Que remarque-t-on ?</div>
+        <input type="text" class="answer-input" id="q9-3" placeholder="Votre réponse…">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-verify" onclick="verify(9)">Vérifier</button>
+      <span class="feedback" id="fb-9"></span>
+    </div>
+    <div class="correction" id="corr-9">
+      <strong>Étape 1 :</strong> tan(28°) = QR / PQ → QR = 55 × tan(28°) = 55 × 0,5317 ≈ <strong>29,24 cm</strong><br><br>
+      <strong>Étape 2 :</strong> PR² = PQ² + QR² = 55² + 29,24² = 3025 + 854,98 ≈ 3879,98 → PR ≈ <strong>62,29 cm</strong><br><br>
+      <strong>Étape 3 :</strong> cos(R) = QR / PR = 29,24 / 62,29 ≈ 0,4694 → R = arccos(0,4694) ≈ <strong>62°</strong>
+      <br><em>Remarque : P + R = 28° + 62° = 90° → les angles aigus d'un triangle rectangle sont complémentaires.</em>
+    </div>
+  </div>
+
+  <!-- Ex 10 : Problème complet -->
+  <div class="ex-card" id="card-10">
+    <div class="ex-header">
+      <div class="ex-num">10</div>
+      <div class="ex-meta">
+        <div class="ex-tags">
+          <span class="tag theo">Thalès</span>
+          <span class="tag theo">Tangente</span>
+          <span class="tag theo">Pythagore</span>
+          <span class="tag">Problème complet</span>
+        </div>
+        <div class="difficulty">
+          <div class="dot on"></div><div class="dot on"></div><div class="dot on"></div><div class="dot on"></div><div class="dot on"></div>
+        </div>
+      </div>
+    </div>
+    <div class="figure-desc">
+      Un armurier doit reproduire en miniature le mécanisme d'un verrou de culasse schématisé par un grand triangle rectangle SAB, angle droit en A.
+      SA = <strong>36 cm</strong>, AB = <strong>27 cm</strong>. 
+      Un point M se trouve sur SA avec SM = <strong>24 cm</strong>, et un point N sur SB tel que MN ∥ AB.
+      Le technicien souhaite : 1) trouver MN par Thalès, 2) calculer l'angle en S du grand triangle, 3) vérifier SB par Pythagore.
+    </div>
+    <div class="questions-block">
+      <div class="question-row">
+        <div class="question-label"><em>Étape 1.</em> Calculer la longueur MN par Thalès.</div>
+        <input type="text" class="answer-input" id="q10-1" placeholder="Votre réponse…">
+      </div>
+      <div class="question-row">
+        <div class="question-label"><em>Étape 2.</em> Calculer l'angle en S à l'aide de la tangente. Arrondir au degré.</div>
+        <input type="text" class="answer-input" id="q10-2" placeholder="Votre réponse…">
+      </div>
+      <div class="question-row">
+        <div class="question-label"><em>Étape 3.</em> Vérifier SB par Pythagore. Arrondir au centième.</div>
+        <input type="text" class="answer-input" id="q10-3" placeholder="Votre réponse…">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-verify" onclick="verify(10)">Vérifier</button>
+      <span class="feedback" id="fb-10"></span>
+    </div>
+    <div class="correction" id="corr-10">
+      <strong>Étape 1 :</strong> SM/SA = MN/AB → 24/36 = MN/27 → MN = 27 × (24/36) = 27 × (2/3) = <strong>18 cm</strong><br><br>
+      <strong>Étape 2 :</strong> tan(S) = AB / SA = 27 / 36 = 0,75 → S = arctan(0,75) ≈ <strong>37°</strong><br><br>
+      <strong>Étape 3 :</strong> SB² = SA² + AB² = 36² + 27² = 1296 + 729 = 2025 → SB = <strong>45 cm</strong>
+    </div>
+  </div>
+
+  <div id="final-score">
+    <h2 id="final-msg">Résultats</h2>
+    <p id="final-detail"></p>
+  </div>
+
+</main>
+
+<script>
+// Réponses attendues (tolérance ±0.5 sauf angles entiers)
+const answers = {
+  1:  [{ id: 'q1-1', val: 50,    tol: 0.5 }],
+  2:  [{ id: 'q2-1', val: 21.17, tol: 0.1 }],
+  3:  [{ id: 'q3-1', val: 14.75, tol: 0.15 }],
+  4:  [{ id: 'q4-1', val: 7.09,  tol: 0.1 }],
+  5:  [{ id: 'q5-1', val: 34,    tol: 1.5 }],
+  6:  [{ id: 'q6-1', val: 15,    tol: 0.5 }],
+  7:  [{ id: 'q7-1', val: 15,    tol: 0.5 }, { id: 'q7-2', val: 37, tol: 1.5 }],
+  8:  [{ id: 'q8-1', val: 12,    tol: 0.5 }, { id: 'q8-2', val: 20, tol: 0.5 }],
+  9:  [{ id: 'q9-1', val: 29.24, tol: 0.5 }, { id: 'q9-2', val: 62.29, tol: 0.5 }, { id: 'q9-3', val: 62, tol: 2 }],
+  10: [{ id: 'q10-1', val: 18,   tol: 0.5 }, { id: 'q10-2', val: 37, tol: 1.5 }, { id: 'q10-3', val: 45, tol: 0.5 }]
+};
+
+let scored = new Set();
+
+function extractNumber(str) {
+  // Cherche le dernier nombre dans la chaîne (résultat final)
+  const matches = str.replace(/,/g, '.').match(/-?\d+(\.\d+)?/g);
+  if (!matches) return NaN;
+  return parseFloat(matches[matches.length - 1]);
+}
+
+function verify(n) {
+  const qs = answers[n];
+  let allCorrect = true;
+
+  qs.forEach(q => {
+    const el = document.getElementById(q.id);
+    const val = extractNumber(el.value);
+    const ok = !isNaN(val) && Math.abs(val - q.val) <= q.tol;
+    el.classList.remove('correct-input', 'wrong-input');
+    el.classList.add(ok ? 'correct-input' : 'wrong-input');
+    if (!ok) allCorrect = false;
+  });
+
+  const fb = document.getElementById('fb-' + n);
+  const card = document.getElementById('card-' + n);
+
+  fb.classList.remove('ok', 'ko');
+  card.classList.remove('answered', 'wrong');
+
+  if (allCorrect) {
+    fb.textContent = '✓ Correct !';
+    fb.classList.add('ok', 'show');
+    card.classList.add('answered');
+    if (!scored.has(n)) {
+      scored.add(n);
+      updateScore();
+    }
+  } else {
+    fb.textContent = '✗ Incorrect — recommence.';
+    fb.classList.add('ko', 'show');
+    card.classList.add('answered', 'wrong');
+    // Vider les champs incorrects pour que l'élève recommence
+    qs.forEach(q => {
+      const el = document.getElementById(q.id);
+      if (el.classList.contains('wrong-input')) {
+        el.value = '';
+        el.classList.remove('wrong-input');
+      }
+    });
+  }
+}
+
+function updateScore() {
+  const total = 10;
+  const s = scored.size;
+  document.getElementById('score-display').textContent = s + ' / ' + total;
+  document.getElementById('progress-fill').style.width = (s / total * 100) + '%';
+
+  if (s === total) {
+    const fs = document.getElementById('final-score');
+    fs.style.display = 'block';
+    document.getElementById('final-msg').textContent = '10 / 10 — Excellent travail !';
+    document.getElementById('final-detail').textContent = 'Tous les exercices sont réussis. Bravo !';
+  }
+}
+</script>
+</body>
+</html>
